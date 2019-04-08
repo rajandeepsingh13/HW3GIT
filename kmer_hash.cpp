@@ -10,19 +10,98 @@
 
 #include "kmer_t.hpp"
 #include "read_kmers.hpp"
-#include "hash_map.hpp"
 
 #include "butil.hpp"
+
+std::vector<upcxx::global_ptr<kmer_pair>> globalData;
+std::vector<upcxx::global_ptr<int>> globalUsed;
+
+//		COPIED FROM HASH_MAP.HPP
+
+struct HashMap {
+
+  size_t my_size;
+  int rank_n;
+
+  size_t size() const noexcept;
+
+  
+  
+
+  HashMap(size_t size);
+
+  void initialize_localData(int currentRank);
+
+  // Most important functions: insert and retrieve
+  // k-mers from the hash table.
+  bool insert(const kmer_pair &kmer);
+  bool find(const pkmer_t &key_kmer, kmer_pair &val_kmer);
+
+  // Helper functions
+
+  // Write and read to a logical data slot in the table.
+  void write_slot(uint64_t slot, const kmer_pair &kmer);
+  kmer_pair read_slot(uint64_t slot);
+
+  // Request a slot or check if it's already used.
+  bool request_slot(uint64_t slot);
+  bool slot_used(uint64_t slot);
+};
+
+HashMap::HashMap(size_t size, int nprocs) {
+  my_size = size;
+  rank_n = nprocs;
+  globalData = vector<global_ptr<kmer_pair>>(rank_n());      // This can fuck me up as data is declared later
+  globalUsed = vector<global_ptr<int>>(rank_n(), 0);   // This can fuck me up as used is declared later
+}
+
+void HashMap::initialize_localData(){
+  //std::vector <kmer_pair> data;
+  upcxx::global_ptr<kmer_pair> data_local = new_array<kmer_pair>(my_size/rank_n);
+  for (int i = 0; i < rank_n; i++){
+    globalHashMap[i] = broadcast(data_local, i).wait();
+  }
+
+  //std::vector <int> used;
+  upcxx::global_ptr<int> used_local = new_array<int>(my_size/rank_n);
+  for (int i = 0; i < rank_n; i++){
+    globalHashMap[i] = broadcast(used_local, i).wait();
+  }
+}
+
+bool HashMap::insert(const kmer_pair &kmer) {
+  uint64_t hash = kmer.hash();
+
+  int sizePerProc = my_size/rank_n;
+  int sizePerProcLast = my_size%rank_n;
+  int procBasedOnHash = hash / (my_size/rank_n);
+  int localSlotID = hash - procBasedOnHash * (my_size/rank_n);
+
+
+  uint64_t probe = 0;
+  bool success = false;
+
+  uint64_t which_global_hashMap_slot = -1;
+
+  do {
+  	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
+  		rput(1, globalUsed[procBasedOnHash] + localSlotID);
+	    rput(1, globalUsed[procBasedOnHash] + localSlotID);
+	    break;
+	}	
+  } while (!success && probe < rank_n);
+  return success;
+}
 
 int main(int argc, char **argv) {
   upcxx::init();
 
   // TODO: remove this, when you start writing
   // parallel implementation.
-  if (upcxx::rank_n() > 1) {
-    throw std::runtime_error("Error: parallel implementation not started yet!"
-      " (remove this when you start working.)");
-  }
+  //if (upcxx::rank_n() > 1) {
+  //  throw std::runtime_error("Error: parallel implementation not started yet!"
+  //    " (remove this when you start working.)");
+  //}
 
   if (argc < 2) {
     BUtil::print("usage: srun -N nodes -n ranks ./kmer_hash kmer_file [verbose|test]\n");
@@ -49,7 +128,10 @@ int main(int argc, char **argv) {
 
   // Load factor of 0.5
   size_t hash_table_size = n_kmers * (1.0 / 0.5);
-  HashMap hashmap(hash_table_size);
+  HashMap hashmap(hash_table_size, upcxx::rank_n());
+
+  hashmap.initialize_localData()
+  upcxx::barrier();
 
   if (run_type == "verbose") {
     BUtil::print("Initializing hash table of size %d for %d kmers.\n",
@@ -66,16 +148,21 @@ int main(int argc, char **argv) {
 
   std::vector <kmer_pair> start_nodes;
 
-  for (auto &kmer : kmers) {
-    bool success = hashmap.insert(kmer);
-    if (!success) {
-      throw std::runtime_error("Error: HashMap is full!");
-    }
+  if (rank_me() == MASTER){
 
-    if (kmer.backwardExt() == 'F') {
-      start_nodes.push_back(kmer);
-    }
+	  for (auto &kmer : kmers) {
+	    bool success = hashmap.insert(kmer);
+	    if (!success) {
+	      throw std::runtime_error("Error: HashMap is full!");
+	    }
+
+	    if (kmer.backwardExt() == 'F') {
+	      start_nodes.push_back(kmer);
+	    }
+	  }
+
   }
+
   auto end_insert = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
 
