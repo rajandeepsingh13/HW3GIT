@@ -86,7 +86,8 @@ bool HashMap::insert(const kmer_pair &kmer) {
   bool success = false;
   int localSlotCount;
 
-std::cout<<upcxx::rget(globalUsed[0]).wait();
+std::cout<<hash<<"  "<<procBasedOnHash;
+//std::cout<<upcxx::rget(globalUsed[0]).wait();
 
 /*
   do {
@@ -240,6 +241,7 @@ int main(int argc, char **argv) {
 	    if (!success) {
 	      throw std::runtime_error("Error: HashMap is full!");
 	    }
+	    break; //comment out later
 
 	    if (kmer.backwardExt() == 'F') {
 	      start_nodes.push_back(kmer);
@@ -247,6 +249,9 @@ int main(int argc, char **argv) {
 	  }
 
   }
+
+
+std::cout<<" "<<upcxx::rank_n();
 /*
   auto end_insert = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
