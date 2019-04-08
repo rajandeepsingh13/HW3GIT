@@ -77,8 +77,8 @@ bool HashMap::insert(const kmer_pair &kmer) {
 
   int sizePerProc = (my_size/rank_n)+1;
   int sizePerProcLast = my_size - sizePerProc*(rank_n - 1);
-  int procBasedOnHash = hash / sizePerProc;
-  int localSlotID = hash % sizePerProc;
+  int procBasedOnHash;
+  int localSlotID;
 
 
   uint64_t probeRank = 0;
@@ -87,35 +87,25 @@ bool HashMap::insert(const kmer_pair &kmer) {
   int localSlotCount;
 
 //std::cout<<hash<<"  "<<procBasedOnHash<<" my_size is "<< my_size<<"\n";
-std::cout<<upcxx::rget(globalUsed[procBasedOnHash]).wait();
+//std::cout<<upcxx::rget(globalUsed[procBasedOnHash]).wait();
 
-/*
+
   do {
+  	hash = (hash + probeRank) % my_size;
+  	procBasedOnHash = hash / sizePerProc;
+  	localSlotID = hash % sizePerProc;
+
   	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
   		rput(1, globalUsed[procBasedOnHash] + localSlotID).wait();
-	    rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();99o
+	    rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();
 	    success = true;
 	    break;
 	} else {
-
-		if(procBasedOnHash <= rank_n-1){
-			localSlotCount = my_size%rank_n;
-		} else{
-			localSlotCount = my_size/rank_n;
-		}
-
-		if (localSlotID<localSlotCount-1)
-			localSlotID++;
-		else{
-			localSlotID=0;
-			procBasedOnHash++;
-			probeRank++;
-		}
+		probeRank++;
 
 	}	
-  } while (!success && probeRank < rank_n);*/
-  //return success;
-  return true;
+  } while (!success && probeRank < my_size);
+  return success;
 }
 
 bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer) {
@@ -181,7 +171,7 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer) {
 
 int main(int argc, char **argv) {
   upcxx::init();
-  std::cout<<" "<<upcxx::rank_n()<<"\n";
+  //std::cout<<" "<<upcxx::rank_n()<<"\n";
   // TODO: remove this, when you start writing
   // parallel implementation.
   //if (upcxx::rank_n() > 1) {
@@ -241,7 +231,6 @@ int main(int argc, char **argv) {
 	    if (!success) {
 	      throw std::runtime_error("Error: HashMap is full!");
 	    }
-	    break; //comment out later
 
 	    if (kmer.backwardExt() == 'F') {
 	      start_nodes.push_back(kmer);
@@ -251,7 +240,7 @@ int main(int argc, char **argv) {
   }
 
 
-std::cout<<" "<<upcxx::rank_n()<<"\n";
+//std::cout<<" "<<upcxx::rank_n()<<"\n";
 /*
   auto end_insert = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
