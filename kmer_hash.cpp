@@ -111,6 +111,8 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer,  int currentRan
   int sizePerProcLast = my_size - sizePerProc*(rank_n - 1);
   int localSlotID;
 
+  int *ptr_used_local = used_local.local();
+  kmer_pair *ptr_data_local = data_local.local();
 
   uint64_t probeRank = 0;
 
@@ -122,8 +124,8 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer,  int currentRan
   	hash = (hash + probeRank) % my_size;
   	localSlotID = hash % sizePerProc;
 
-  	if (used_local[localSlotID] != 0){
-  		val_kmer = data_local[localSlotID];
+  	if (ptr_used_local[localSlotID] != 0){
+  		val_kmer = ptr_data_local[localSlotID];
   		if (val_kmer.kmer == key_kmer) {
         	success = true;
       	}
