@@ -83,14 +83,14 @@ bool HashMap::insert(const kmer_pair &kmer) {
   bool success = false;
   int localSlotCount;
 
-if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
+/*if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
 	int lol=1;
-}
+}*/
 /*
   do {
   	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
   		rput(1, globalUsed[procBasedOnHash] + localSlotID).wait();
-	    rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();
+	    rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();99o
 	    success = true;
 	    break;
 	} else {
