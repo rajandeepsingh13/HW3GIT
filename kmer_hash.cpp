@@ -111,7 +111,8 @@ if (upcxx::rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
 
 	}	
   } while (!success && probeRank < rank_n);*/
-  return success;
+  //return success;
+  return false;
 }
 
 bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer) {
