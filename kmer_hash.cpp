@@ -82,6 +82,10 @@ bool HashMap::insert(const kmer_pair &kmer) {
 
   bool success = false;
   int localSlotCount;
+
+if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
+	cout<<"lol";
+/*
   do {
   	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
   		rput(1, globalUsed[procBasedOnHash] + localSlotID).wait();
@@ -105,7 +109,7 @@ bool HashMap::insert(const kmer_pair &kmer) {
 		}
 
 	}	
-  } while (!success && probeRank < rank_n);
+  } while (!success && probeRank < rank_n);*/
   return success;
 }
 
