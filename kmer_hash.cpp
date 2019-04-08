@@ -16,7 +16,13 @@
 std::vector<upcxx::global_ptr<kmer_pair>> globalData;
 std::vector<upcxx::global_ptr<int>> globalUsed;
 
+
+
+
+
 //		COPIED FROM HASH_MAP.HPP
+
+
 
 struct HashMap {
 
@@ -210,8 +216,7 @@ int main(int argc, char **argv) {
 	    }
 	  }
 
-
-//std::cout<<" "<<upcxx::rank_n()<<"\n";
+std::cout<<" "<<start_nodes.size()<<"\n";
 
   auto end_insert = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
