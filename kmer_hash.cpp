@@ -30,7 +30,7 @@ struct HashMap {
 
   HashMap(size_t size, int nprocs);
 
-  void initialize_localData(int currentRank);
+  void initialize_localData();
 
   // Most important functions: insert and retrieve
   // k-mers from the hash table.
@@ -51,7 +51,7 @@ struct HashMap {
 HashMap::HashMap(size_t size, int nprocs) {
   my_size = size;
   rank_n = nprocs;
-  globalData = std::vector<upcxx::global_ptr<kmer_pair>>(rank_n;      // This can fuck me up as data is declared later
+  globalData = std::vector<upcxx::global_ptr<kmer_pair>>(rank_n);      // This can fuck me up as data is declared later
   globalUsed = std::vector<upcxx::global_ptr<int>>(rank_n, 0);   // This can fuck me up as used is declared later
 }
 
