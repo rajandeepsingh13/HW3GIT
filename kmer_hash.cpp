@@ -75,7 +75,7 @@ void HashMap::initialize_localData(){
 bool HashMap::insert(const kmer_pair &kmer) {
   uint64_t hash = kmer.hash() % my_size;
 
-  int sizePerProc = (my_size/rank_n)+1;
+  int sizePerProc = (my_size+rank_n-1)/rank_n;
   int sizePerProcLast = my_size - sizePerProc*(rank_n - 1);
   int procBasedOnHash;
   int localSlotID;
