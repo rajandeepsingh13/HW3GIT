@@ -78,18 +78,34 @@ bool HashMap::insert(const kmer_pair &kmer) {
   int localSlotID = hash - procBasedOnHash * (my_size/rank_n);
 
 
-  uint64_t probe = 0;
+  uint64_t probeRank = 0;
+
   bool success = false;
-
-  uint64_t which_global_hashMap_slot = -1;
-
+  int localSlotCount;
   do {
   	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
-  		rput(1, globalUsed[procBasedOnHash] + localSlotID);
-	    rput(1, globalUsed[procBasedOnHash] + localSlotID);
+  		rput(1, globalUsed[procBasedOnHash] + localSlotID).wait();
+	    rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();
+	    success = true;
 	    break;
+	} else {
+
+		if(procBasedOnHash == rank_n-1){
+			localSlotCount = my_size%rank_n;
+		} else{
+			localSlotCount = my_size/rank_n;
+		}
+
+		if (localSlotID<localSlotCount)
+			localSlotID++;
+		else{
+			localSlotID=0;
+			procBasedOnHash++;
+			probeRank++;
+		}
+
 	}	
-  } while (!success && probe < rank_n);
+  } while (!success && probeRank < rank_n);
   return success;
 }
 
