@@ -28,7 +28,7 @@ struct HashMap {
   
   
 
-  HashMap(size_t size);
+  HashMap(size_t size, int nprocs);
 
   void initialize_localData(int currentRank);
 
