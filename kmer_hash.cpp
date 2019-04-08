@@ -35,7 +35,7 @@ struct HashMap {
   // Most important functions: insert and retrieve
   // k-mers from the hash table.
   bool insert(const kmer_pair &kmer);
-  bool find(const pkmer_t &key_kmer, kmer_pair &val_kmer);
+  bool find(const pkmer_t &key_kmer, kmer_pair &val_kmer, int currentRank);
 
   // Helper functions
 
