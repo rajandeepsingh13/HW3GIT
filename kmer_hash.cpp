@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
   auto start = std::chrono::high_resolution_clock::now();
 
   std::vector <kmer_pair> start_nodes;
-/*
+
   if (upcxx::rank_me() == 0){
 
 	  for (auto &kmer : kmers) {
@@ -239,7 +239,7 @@ int main(int argc, char **argv) {
 	  }
 
   }
-
+/*
   auto end_insert = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
 
