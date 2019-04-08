@@ -110,19 +110,63 @@ bool HashMap::insert(const kmer_pair &kmer) {
 }
 
 bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer) {
-  uint64_t hash = key_kmer.hash();
-  uint64_t probe = 0;
+
+  uint64_t hash = kmer.hash();
+
+  int sizePerProc = my_size/rank_n;
+  int sizePerProcLast = my_size%rank_n;
+  int procBasedOnHash = hash / (my_size/rank_n);
+  int localSlotID = hash - procBasedOnHash * (my_size/rank_n);
+
+
+  uint64_t probeRank = 0;
+
   bool success = false;
+  int localSlotCount;
+
   do {
-    uint64_t slot = (hash + probe++) % size();
-    if (slot_used(slot)) {
-      val_kmer = read_slot(slot);
-      if (val_kmer.kmer == key_kmer) {
-        success = true;
-      }
-    }
-  } while (!success && probe < size());
+  	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() != 0){
+  		val_kmer = rget(globalData[procBasedOnHash] + localSlotID).wait();
+  		if (val_kmer.kmer == key_kmer) {
+        	success = true;
+      	}
+      	else {
+      		if(procBasedOnHash == rank_n-1){
+				localSlotCount = my_size%rank_n;
+			} else{
+				localSlotCount = my_size/rank_n;
+			}
+
+			if (localSlotID<localSlotCount)
+				localSlotID++;
+			else{
+				localSlotID=0;
+				procBasedOnHash++;
+				probeRank++;
+			}
+
+      	}
+	} else {
+
+		if(procBasedOnHash == rank_n-1){
+			localSlotCount = my_size%rank_n;
+		} else{
+			localSlotCount = my_size/rank_n;
+		}
+
+		if (localSlotID<localSlotCount)
+			localSlotID++;
+		else{
+			localSlotID=0;
+			procBasedOnHash++;
+			probeRank++;
+		}
+
+	}	
+  } while (!success && probeRank < rank_n);
   return success;
+
+
 }
 
 bool HashMap::slot_used(uint64_t slot) {
@@ -179,7 +223,7 @@ int main(int argc, char **argv) {
   if (run_type == "verbose") {
     BUtil::print("Initializing hash table of size %d for %d kmers.\n",
       hash_table_size, n_kmers);
-  }
+  } 
 
   std::vector <kmer_pair> kmers = read_kmers(kmer_fname, upcxx::rank_n(), upcxx::rank_me());
 
@@ -217,19 +261,21 @@ int main(int argc, char **argv) {
 
   auto start_read = std::chrono::high_resolution_clock::now();
 
-  std::list <std::list <kmer_pair>> contigs;
-  for (const auto &start_kmer : start_nodes) {
-    std::list <kmer_pair> contig;
-    contig.push_back(start_kmer);
-    while (contig.back().forwardExt() != 'F') {
-      kmer_pair kmer;
-      bool success = hashmap.find(contig.back().next_kmer(), kmer);
-      if (!success) {
-        throw std::runtime_error("Error: k-mer not found in hashmap.");
-      }
-      contig.push_back(kmer);
-    }
-    contigs.push_back(contig);
+  if (rank_me() == MASTER){
+	  std::list <std::list <kmer_pair>> contigs;
+	  for (const auto &start_kmer : start_nodes) {
+	    std::list <kmer_pair> contig;
+	    contig.push_back(start_kmer);
+	    while (contig.back().forwardExt() != 'F') {
+	      kmer_pair kmer;
+	      bool success = hashmap.find(contig.back().next_kmer(), kmer, somesortoframk); //fix this
+	      if (!success) {
+	        throw std::runtime_error("Error: k-mer not found in hashmap.");
+	      }
+	      contig.push_back(kmer);
+	    }
+	    contigs.push_back(contig);
+	  }
   }
 
   auto end_read = std::chrono::high_resolution_clock::now();
