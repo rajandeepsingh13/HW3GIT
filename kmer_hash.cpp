@@ -67,12 +67,15 @@ void HashMap::initialize_localData(){
   for (int i = 0; i < rank_n; i++){
     globalUsed[i] = broadcast(used_local, i).wait();
   }
+
+
+
 }
 
 bool HashMap::insert(const kmer_pair &kmer) {
   uint64_t hash = kmer.hash();
 
-  int sizePerProc = my_size/rank_n;
+  int sizePerProc = (my_size/rank_n) + 1;
   int sizePerProcLast = my_size%rank_n;
   int procBasedOnHash = hash / (my_size/rank_n);
   int localSlotID = hash - procBasedOnHash * (my_size/rank_n);
@@ -83,9 +86,8 @@ bool HashMap::insert(const kmer_pair &kmer) {
   bool success = false;
   int localSlotCount;
 
-if (upcxx::rget(globalUsed[procBasedOnHash]).wait() == 0){
-	int lol=1;
-}
+std::cout<<upcxx::rget(globalUsed[procBasedOnHash]).wait();
+
 /*
   do {
   	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
