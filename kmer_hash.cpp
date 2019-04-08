@@ -83,7 +83,7 @@ bool HashMap::insert(const kmer_pair &kmer) {
   bool success = false;
   int localSlotCount;
 
-if (upcxx::rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
+if (upcxx::rget(globalUsed[procBasedOnHash]).wait() == 0){
 	int lol=1;
 }
 /*
