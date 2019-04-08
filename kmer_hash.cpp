@@ -84,7 +84,8 @@ bool HashMap::insert(const kmer_pair &kmer) {
   int localSlotCount;
 
 if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
-	cout<<"lol";
+	int lol=1;
+}
 /*
   do {
   	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
