@@ -90,13 +90,13 @@ bool HashMap::insert(const kmer_pair &kmer) {
 	    break;
 	} else {
 
-		if(procBasedOnHash == rank_n-1){
+		if(procBasedOnHash <= rank_n-1){
 			localSlotCount = my_size%rank_n;
 		} else{
 			localSlotCount = my_size/rank_n;
 		}
 
-		if (localSlotID<localSlotCount)
+		if (localSlotID<localSlotCount-1)
 			localSlotID++;
 		else{
 			localSlotID=0;
