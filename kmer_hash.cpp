@@ -86,7 +86,7 @@ bool HashMap::insert(const kmer_pair &kmer) {
   bool success = false;
   int localSlotCount;
 
-std::cout<<upcxx::rget(globalUsed[procBasedOnHash]).wait();
+std::cout<<upcxx::rget(globalUsed[0]).wait();
 
 /*
   do {
