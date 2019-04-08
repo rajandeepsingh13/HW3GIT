@@ -250,7 +250,7 @@ int main(int argc, char **argv) {
   upcxx::barrier();
 
   auto start_read = std::chrono::high_resolution_clock::now();
-
+/*
 std::list <std::list <kmer_pair>> contigs;
   if (upcxx::rank_me() == 0){
 	  
@@ -299,7 +299,7 @@ std::list <std::list <kmer_pair>> contigs;
     }
     fout.close();
   }
-
+*/
   upcxx::finalize();
   return 0;
 }
