@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
   size_t hash_table_size = n_kmers * (1.0 / 0.5);
   HashMap hashmap(hash_table_size, upcxx::rank_n());
 
-  hashmap.initialize_localData()
+  hashmap.initialize_localData();
   upcxx::barrier();
 
   if (run_type == "verbose") {
@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
 
   std::vector <kmer_pair> start_nodes;
 
-  if (rank_me() == MASTER){
+  if (upcxx::rank_me() == upcxx::MASTER){
 
 	  for (auto &kmer : kmers) {
 	    bool success = hashmap.insert(kmer);
@@ -251,14 +251,14 @@ int main(int argc, char **argv) {
 
   auto start_read = std::chrono::high_resolution_clock::now();
 
-  if (rank_me() == MASTER){
+  if (upcxx::rank_me() == upcxx::MASTER){
 	  std::list <std::list <kmer_pair>> contigs;
 	  for (const auto &start_kmer : start_nodes) {
 	    std::list <kmer_pair> contig;
 	    contig.push_back(start_kmer);
 	    while (contig.back().forwardExt() != 'F') {
 	      kmer_pair kmer;
-	      bool success = hashmap.find(contig.back().next_kmer(), kmer, somesortoframk); //fix this
+	      bool success = hashmap.find(contig.back().next_kmer(), kmer); //fix this
 	      if (!success) {
 	        throw std::runtime_error("Error: k-mer not found in hashmap.");
 	      }
