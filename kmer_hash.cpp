@@ -73,7 +73,7 @@ void HashMap::initialize_localData(){
 }
 
 bool HashMap::insert(const kmer_pair &kmer) {
-  uint64_t hash = kmer.hash();
+  uint64_t hash = kmer.hash() % my_size;
 
   int sizePerProc = (my_size/rank_n)+1;
   int sizePerProcLast = my_size - sizePerProc*(rank_n - 1);
@@ -86,8 +86,8 @@ bool HashMap::insert(const kmer_pair &kmer) {
   bool success = false;
   int localSlotCount;
 
-std::cout<<hash<<"  "<<procBasedOnHash<<"\n";
-//std::cout<<upcxx::rget(globalUsed[0]).wait();
+//std::cout<<hash<<"  "<<procBasedOnHash<<" my_size is "<< my_size<<"\n";
+std::cout<<upcxx::rget(globalUsed[procBasedOnHash]).wait();
 
 /*
   do {
