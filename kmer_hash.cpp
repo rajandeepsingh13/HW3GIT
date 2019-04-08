@@ -51,8 +51,8 @@ struct HashMap {
 HashMap::HashMap(size_t size, int nprocs) {
   my_size = size;
   rank_n = nprocs;
-  globalData = vector<global_ptr<kmer_pair>>(rank_n());      // This can fuck me up as data is declared later
-  globalUsed = vector<global_ptr<int>>(rank_n(), 0);   // This can fuck me up as used is declared later
+  globalData = std::vector<upcxx::global_ptr<kmer_pair>>(rank_n());      // This can fuck me up as data is declared later
+  globalUsed = std::vector<upcxx::global_ptr<int>>(rank_n(), 0);   // This can fuck me up as used is declared later
 }
 
 void HashMap::initialize_localData(){
