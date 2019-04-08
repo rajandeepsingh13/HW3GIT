@@ -111,7 +111,7 @@ bool HashMap::insert(const kmer_pair &kmer) {
 
 bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer) {
 
-  uint64_t hash = kmer.hash();
+  uint64_t hash = key_kmer.hash();
 
   int sizePerProc = my_size/rank_n;
   int sizePerProcLast = my_size%rank_n;
@@ -169,16 +169,6 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer) {
 
 }
 
-bool HashMap::slot_used(uint64_t slot) {
-  return used[slot] != 0;
-}
-
-void HashMap::write_slot(uint64_t slot, const kmer_pair &kmer) {
-  data[slot] = kmer;
-}
-
-kmer_pair HashMap::read_slot(uint64_t slot) {
-  return data[slot];
 
 int main(int argc, char **argv) {
   upcxx::init();
