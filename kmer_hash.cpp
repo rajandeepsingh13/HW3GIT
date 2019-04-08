@@ -234,11 +234,13 @@ std::list <std::list <kmer_pair>> contigs;
 	      bool success = hashmap.find(contig.back().next_kmer(), kmer, upcxx::rank_me()); //fix this
 	      if (!success) {
 	        //throw std::runtime_error("Error: k-mer not found in hashmap.");
-	        std::cout<<"Fail\n";
+	        int lol = 1;
 	      } else{
-	      	std::cout<<"Success\n";
+	      	//std::cout<<"Success\n";
+	      	contig.push_back(kmer);
 	      }
-	      contig.push_back(kmer);
+	      //contig.push_back(kmer);
+	      upcxx::barrier();
 	    }
 	    contigs.push_back(contig);
 	  }
