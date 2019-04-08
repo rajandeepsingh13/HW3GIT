@@ -75,10 +75,10 @@ void HashMap::initialize_localData(){
 bool HashMap::insert(const kmer_pair &kmer) {
   uint64_t hash = kmer.hash();
 
-  int sizePerProc = (my_size/rank_n) + 1;
-  int sizePerProcLast = my_size%rank_n;
-  int procBasedOnHash = hash / (my_size/rank_n);
-  int localSlotID = hash - procBasedOnHash * (my_size/rank_n);
+  int sizePerProc = (my_size/rank_n)+1;
+  int sizePerProcLast = my_size - sizePerProc*(rank_n - 1);
+  int procBasedOnHash = hash / sizePerProc;
+  int localSlotID = hash % sizePerProc;
 
 
   uint64_t probeRank = 0;
@@ -181,7 +181,7 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer) {
 
 int main(int argc, char **argv) {
   upcxx::init();
-
+  std::cout<<" "<<upcxx::rank_n()<<"\n";
   // TODO: remove this, when you start writing
   // parallel implementation.
   //if (upcxx::rank_n() > 1) {
