@@ -59,13 +59,13 @@ void HashMap::initialize_localData(){
   //std::vector <kmer_pair> data;
   upcxx::global_ptr<kmer_pair> data_local = upcxx::new_array<kmer_pair>(my_size/rank_n);
   for (int i = 0; i < rank_n; i++){
-    globalHashMap[i] = broadcast(data_local, i).wait();
+    globalData[i] = broadcast(data_local, i).wait();
   }
 
   //std::vector <int> used;
   upcxx::global_ptr<int> used_local = upcxx::new_array<int>(my_size/rank_n);
   for (int i = 0; i < rank_n; i++){
-    globalHashMap[i] = broadcast(used_local, i).wait();
+    globalUsed[i] = broadcast(used_local, i).wait();
   }
 }
 
