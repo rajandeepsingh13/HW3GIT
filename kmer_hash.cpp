@@ -86,7 +86,7 @@ bool HashMap::insert(const kmer_pair &kmer) {
   bool success = false;
   int localSlotCount;
 
-std::cout<<hash<<"  "<<procBasedOnHash;
+std::cout<<hash<<"  "<<procBasedOnHash<<"\n";
 //std::cout<<upcxx::rget(globalUsed[0]).wait();
 
 /*
@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
   }
 
 
-std::cout<<" "<<upcxx::rank_n();
+std::cout<<" "<<upcxx::rank_n(<<"\n");
 /*
   auto end_insert = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
