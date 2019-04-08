@@ -86,10 +86,6 @@ bool HashMap::insert(const kmer_pair &kmer) {
   bool success = false;
   int localSlotCount;
 
-//std::cout<<hash<<"  "<<procBasedOnHash<<" my_size is "<< my_size<<"\n";
-//std::cout<<upcxx::rget(globalUsed[procBasedOnHash]).wait();
-
-
   do {
   	hash = (hash + probeRank) % my_size;
   	procBasedOnHash = hash / sizePerProc;
@@ -223,10 +219,10 @@ int main(int argc, char **argv) {
   auto start = std::chrono::high_resolution_clock::now();
 
   std::vector <kmer_pair> start_nodes;
-
-  if (upcxx::rank_me() == 0){
-
-	  for (auto &kmer : kmers) {
+  int sizeSplit = (kmers.size()+upcxx::rank_n()-1)/upcxx::rank_n();
+  int startPoint = sizeSplit * upcxx::rank_me();
+	  for (int i = startPoint; i<startPoint+sizeSplit||i<kmers.size(); i++) {
+	  	kmer_pair kmer = kmers[i];
 	    bool success = hashmap.insert(kmer);
 	    if (!success) {
 	      throw std::runtime_error("Error: HashMap is full!");
@@ -236,8 +232,6 @@ int main(int argc, char **argv) {
 	      start_nodes.push_back(kmer);
 	    }
 	  }
-
-  }
 
 
 //std::cout<<" "<<upcxx::rank_n()<<"\n";
