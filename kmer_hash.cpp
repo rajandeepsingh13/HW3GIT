@@ -65,13 +65,14 @@ void HashMap::initialize_localData(){
   //std::vector <kmer_pair> data;
   data_local = upcxx::new_array<kmer_pair>(my_size/rank_n);
   for (int i = 0; i < rank_n; i++){
-    globalData[i] = broadcast(data_local, i).wait();
+
+    globalData[i] = upcxx::broadcast(data_local, i).wait();
   }
 
   //std::vector <int> used;
   used_local = upcxx::new_array<int>(my_size/rank_n);
   for (int i = 0; i < rank_n; i++){
-    globalUsed[i] = broadcast(used_local, i).wait();
+    globalUsed[i] = upcxx::broadcast(used_local, i).wait();
   }
 
 
@@ -259,7 +260,7 @@ int main(int argc, char **argv) {
 
 
 std::list <std::list <kmer_pair>> contigs;
-	  
+/*	  
 	  for (const auto &start_kmer : start_nodes) {
 	    std::list <kmer_pair> contig;
 	    contig.push_back(start_kmer);
@@ -277,7 +278,7 @@ std::list <std::list <kmer_pair>> contigs;
 	      //upcxx::barrier();
 	    }
 	    contigs.push_back(contig);
-	  }
+	  }*/
 
   auto end_read = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
