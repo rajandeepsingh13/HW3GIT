@@ -15,7 +15,7 @@
 
 std::vector<upcxx::global_ptr<kmer_pair>> globalData;
 std::vector<upcxx::global_ptr<int>> globalUsed;
-
+std::list<upcxx::global_ptr<kmer_pair> contigsMaster;
 
 
 
@@ -115,7 +115,9 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer,  int currentRan
 
   int sizePerProc = (my_size+rank_n-1)/rank_n;
   int sizePerProcLast = my_size - sizePerProc*(rank_n - 1);
+  int procBasedOnHash;
   int localSlotID;
+
 
   int *ptr_used_local = used_local.local();
   kmer_pair *ptr_data_local = data_local.local();
@@ -126,6 +128,28 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer,  int currentRan
   int localSlotCount;
   localSlotCount = currentRank == rank_n-1 ? sizePerProcLast : sizePerProc;
 
+
+  do {
+  	hash = (hash + probeRank) % my_size;
+  	procBasedOnHash = hash / sizePerProc;
+  	localSlotID = hash % sizePerProc;
+
+  	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() != 0){
+	    val_kmer = rget(globalData[procBasedOnHash] + localSlotID);
+	    if (val_kmer.kmer == key_kmer) {
+        	success = true;
+      	}
+      	else {
+      		probeRank++;
+      	}
+	} else {
+		probeRank++;
+
+	}	
+  } while (!success && probeRank < my_size);
+  return success;
+
+/*
   do {
   	hash = (hash + probeRank) % my_size;
   	localSlotID = hash % sizePerProc;
@@ -143,7 +167,7 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer,  int currentRan
 	}	
   } while (!success && probeRank < localSlotCount);
   return success;
-
+*/
 
 }
 
@@ -216,7 +240,7 @@ int main(int argc, char **argv) {
 	    }
 	  }
 
-std::cout<<" "<<start_nodes.size()<<"\n";
+//std::cout<<" "<<start_nodes.size()<<"\n";
 
   auto end_insert = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
@@ -238,14 +262,14 @@ std::list <std::list <kmer_pair>> contigs;
 	      kmer_pair kmer;
 	      bool success = hashmap.find(contig.back().next_kmer(), kmer, upcxx::rank_me()); //fix this
 	      if (!success) {
-	        //throw std::runtime_error("Error: k-mer not found in hashmap.");
-	        int lol = 1;
-	      } else{
+	        throw std::runtime_error("Error: k-mer not found in hashmap.");
+	        //int lol = 1;
+	      }//else{
 	      	//std::cout<<"Success\n";
-	      	contig.push_back(kmer);
-	      }
-	      //contig.push_back(kmer);
-	      upcxx::barrier();
+	      	//contig.push_back(kmer);
+	     // }
+	      contig.push_back(kmer);
+	      //upcxx::barrier();
 	    }
 	    contigs.push_back(contig);
 	  }
