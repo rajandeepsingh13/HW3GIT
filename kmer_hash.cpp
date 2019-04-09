@@ -13,8 +13,8 @@
 
 #include "butil.hpp"
 
-std::vector<upcxx::global_ptr<kmer_pair>> globalData;
-std::vector<upcxx::global_ptr<int>> globalUsed;
+//std::vector<upcxx::global_ptr<kmer_pair>> globalData;
+//std::vector<upcxx::global_ptr<int>> globalUsed;
 //std::list<upcxx::global_ptr<kmer_pair> contigsMaster;
 
 
@@ -26,6 +26,8 @@ std::vector<upcxx::global_ptr<int>> globalUsed;
 
 struct HashMap {
 
+std::vector<upcxx::global_ptr<kmer_pair>> globalData;
+std::vector<upcxx::global_ptr<int>> globalUsed;
   size_t my_size;
   int rank_n;
 
@@ -78,6 +80,38 @@ void HashMap::initialize_localData(){
 
 
 }
+/*
+bool HashMap::insert(const kmer_pair &kmer) {
+  uint64_t hash = kmer.hash() % my_size;
+
+  int sizePerProc = (my_size+rank_n-1)/rank_n;
+  int sizePerProcLast = my_size - sizePerProc*(rank_n - 1);
+  int procBasedOnHash;
+  int localSlotID;
+
+
+  uint64_t probeRank = 0;
+
+  bool success = false;
+
+  do {
+  	hash = (hash + probeRank) % my_size;
+  	procBasedOnHash = hash / sizePerProc;
+  	localSlotID = hash % sizePerProc;
+
+  	if (upcxx::rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
+  		upcxx::rput(1, globalUsed[procBasedOnHash] + localSlotID).wait();
+	    upcxx::rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();
+	    success = true;
+	    break;
+	} else {
+		probeRank++;
+
+	}	
+  } while (!success && probeRank < my_size);
+  return success;
+}
+*/
 
 bool HashMap::insert(const kmer_pair &kmer) {
   uint64_t hash = kmer.hash() % my_size;
@@ -109,6 +143,7 @@ bool HashMap::insert(const kmer_pair &kmer) {
   } while (!success && probeRank < my_size);
   return success;
 }
+
 
 bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer,  int currentRank) {
 
