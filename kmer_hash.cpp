@@ -253,7 +253,10 @@ int main(int argc, char **argv) {
 
   auto start_read = std::chrono::high_resolution_clock::now();
 
-  std::cout<<upcxx::rget(globalUsed[0] + 2).wait();
+
+  std::cout<<"\n this is it:"<<upcxx::rget(globalUsed[0] + 2).wait();
+  upcxx::barrier();
+
 
 std::list <std::list <kmer_pair>> contigs;
 	  
