@@ -15,7 +15,7 @@
 
 std::vector<upcxx::global_ptr<kmer_pair>> globalData;
 std::vector<upcxx::global_ptr<int>> globalUsed;
-std::list<upcxx::global_ptr<kmer_pair> contigsMaster;
+//std::list<upcxx::global_ptr<kmer_pair> contigsMaster;
 
 
 
@@ -96,9 +96,9 @@ bool HashMap::insert(const kmer_pair &kmer) {
   	procBasedOnHash = hash / sizePerProc;
   	localSlotID = hash % sizePerProc;
 
-  	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
-  		rput(1, globalUsed[procBasedOnHash] + localSlotID).wait();
-	    rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();
+  	if (upcxx::rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
+  		upcxx::rput(1, globalUsed[procBasedOnHash] + localSlotID).wait();
+	    upcxx::rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();
 	    success = true;
 	    break;
 	} else {
@@ -134,8 +134,8 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer,  int currentRan
   	procBasedOnHash = hash / sizePerProc;
   	localSlotID = hash % sizePerProc;
 
-  	if (rget(globalUsed[procBasedOnHash] + localSlotID).wait() != 0){
-	    val_kmer = rget(globalData[procBasedOnHash] + localSlotID);
+  	if (upcx::rget(globalUsed[procBasedOnHash] + localSlotID).wait() != 0){
+	    val_kmer = upcxx::rget(globalData[procBasedOnHash] + localSlotID);
 	    if (val_kmer.kmer == key_kmer) {
         	success = true;
       	}
