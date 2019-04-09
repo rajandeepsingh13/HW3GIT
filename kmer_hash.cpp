@@ -253,6 +253,8 @@ int main(int argc, char **argv) {
 
   auto start_read = std::chrono::high_resolution_clock::now();
 
+  std::cout<<upcxx::rget(globalData[0] + 2).wait();
+
 std::list <std::list <kmer_pair>> contigs;
 	  
 	  for (const auto &start_kmer : start_nodes) {
