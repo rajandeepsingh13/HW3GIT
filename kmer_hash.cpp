@@ -134,8 +134,8 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer,  int currentRan
   	procBasedOnHash = hash / sizePerProc;
   	localSlotID = hash % sizePerProc;
 
-  	if (upcx::rget(globalUsed[procBasedOnHash] + localSlotID).wait() != 0){
-	    val_kmer = upcxx::rget(globalData[procBasedOnHash] + localSlotID);
+  	if (upcxx::rget(globalUsed[procBasedOnHash] + localSlotID).wait() != 0){
+	    val_kmer = upcxx::rget(globalData[procBasedOnHash] + localSlotID).wait();
 	    if (val_kmer.kmer == key_kmer) {
         	success = true;
       	}
