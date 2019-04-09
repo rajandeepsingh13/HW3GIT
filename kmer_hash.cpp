@@ -295,7 +295,7 @@ int main(int argc, char **argv) {
 
 
 std::list <std::list <kmer_pair>> contigs;
-/*	  
+	  
 	  for (const auto &start_kmer : start_nodes) {
 	    std::list <kmer_pair> contig;
 	    contig.push_back(start_kmer);
@@ -313,7 +313,7 @@ std::list <std::list <kmer_pair>> contigs;
 	      //upcxx::barrier();
 	    }
 	    contigs.push_back(contig);
-	  }*/
+	  }
 
   auto end_read = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
