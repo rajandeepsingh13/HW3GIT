@@ -65,15 +65,21 @@ HashMap::HashMap(size_t size, int nprocs) {
 
 void HashMap::initialize_localData(){
   //std::vector <kmer_pair> data;
-  data_local = upcxx::new_array<kmer_pair>(my_size/rank_n);
+	int sizePerProc = (my_size+rank_n-1)/rank_n;
+  data_local = upcxx::new_array<kmer_pair>(sizePerProc);
   for (int i = 0; i < rank_n; i++){
-
+  	if (upcxx::rank_me() == i){
+  		globalData[i] = data_local;	
+  	}
     globalData[i] = upcxx::broadcast(data_local, i).wait();
   }
 
   //std::vector <int> used;
-  used_local = upcxx::new_array<int>(my_size/rank_n);
+  used_local = upcxx::new_array<int>(sizePerProc);
   for (int i = 0; i < rank_n; i++){
+  	if (upcxx::rank_me() == i){
+  		globalUsed[i] = used_local;	
+  	}
     globalUsed[i] = upcxx::broadcast(used_local, i).wait();
   }
 
