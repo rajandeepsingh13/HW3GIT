@@ -92,38 +92,6 @@ void HashMap::printer(){
 	std::cout<<"\n this is it:"<<upcxx::rget(globalUsed[0] + 2).wait();
 }
 
-/*
-bool HashMap::insert(const kmer_pair &kmer) {
-  uint64_t hash = kmer.hash() % my_size;
-
-  int sizePerProc = (my_size+rank_n-1)/rank_n;
-  int sizePerProcLast = my_size - sizePerProc*(rank_n - 1);
-  int procBasedOnHash;
-  int localSlotID;
-
-
-  uint64_t probeRank = 0;
-
-  bool success = false;
-
-  do {
-  	hash = (hash + probeRank) % my_size;
-  	procBasedOnHash = hash / sizePerProc;
-  	localSlotID = hash % sizePerProc;
-
-  	if (upcxx::rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
-  		upcxx::rput(1, globalUsed[procBasedOnHash] + localSlotID).wait();
-	    upcxx::rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();
-	    success = true;
-	    break;
-	} else {
-		probeRank++;
-
-	}	
-  } while (!success && probeRank < my_size);
-  return success;
-}
-*/
 
 bool HashMap::insert(const kmer_pair &kmer, upcxx::atomic_domain<int>& ad_i64) {
   uint64_t hash = kmer.hash() % my_size;
@@ -138,7 +106,7 @@ bool HashMap::insert(const kmer_pair &kmer, upcxx::atomic_domain<int>& ad_i64) {
 
   bool success = false;
 
-  do { //TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  do {
   	hash = (hash + probeRank) % my_size;
   	procBasedOnHash = hash / sizePerProc;
   	localSlotID = hash % sizePerProc;
@@ -197,38 +165,12 @@ bool HashMap::find(const pkmer_t &key_kmer, kmer_pair &val_kmer,  int currentRan
   } while (!success && probeRank < my_size);
   return success;
 
-/*
-  do {
-  	hash = (hash + probeRank) % my_size;
-  	localSlotID = hash % sizePerProc;
-
-  	if (ptr_used_local[localSlotID] != 0){
-  		val_kmer = ptr_data_local[localSlotID];
-  		if (val_kmer.kmer == key_kmer) {
-        	success = true;
-      	}
-      	else {
-      		probeRank++;
-      	}
-	} else {
-		probeRank++;
-	}	
-  } while (!success && probeRank < localSlotCount);
-  return success;
-*/
-
 }
 
 
 int main(int argc, char **argv) {
   upcxx::init();
-  //std::cout<<" "<<upcxx::rank_n()<<"\n";
-  // TODO: remove this, when you start writing
-  // parallel implementation.
-  //if (upcxx::rank_n() > 1) {
-  //  throw std::runtime_error("Error: parallel implementation not started yet!"
-  //    " (remove this when you start working.)");
-  //}
+
 
   if (argc < 2) {
     BUtil::print("usage: srun -N nodes -n ranks ./kmer_hash kmer_file [verbose|test]\n");
@@ -278,7 +220,9 @@ int main(int argc, char **argv) {
   std::vector <kmer_pair> start_nodes;
   int sizeSplit = (kmers.size()+upcxx::rank_n()-1)/upcxx::rank_n();
   int startPoint = sizeSplit * upcxx::rank_me();
-	  for (int i = startPoint; i<startPoint+sizeSplit||i<kmers.size(); i++) {
+	
+/*
+	for (int i = startPoint; i<startPoint+sizeSplit||i<kmers.size(); i++) {
 	  	kmer_pair kmer = kmers[i];
 	    bool success = hashmap.insert(kmer, ad_i64);
 	    if (!success) {
@@ -289,7 +233,18 @@ int main(int argc, char **argv) {
 	      start_nodes.push_back(kmer);
 	    }
 	  }
+*/
 
+  for (auto &kmer : kmers) {
+    bool success = hashmap.insert(kmer, ad_i64); 
+    if (!success) {
+      throw std::runtime_error("Error: HashMap is full!");
+    }
+
+    if (kmer.backwardExt() == 'F') {
+      start_nodes.push_back(kmer);  
+    }
+  }	
 //std::cout<<" "<<start_nodes.size()<<"\n";
 
   auto end_insert = std::chrono::high_resolution_clock::now();
@@ -306,12 +261,12 @@ int main(int argc, char **argv) {
   auto start_read = std::chrono::high_resolution_clock::now();
 
 
-  hashmap.printer();
-  upcxx::barrier();
+  //hashmap.printer();
+  //upcxx::barrier();
 
 
 std::list <std::list <kmer_pair>> contigs;
-	  /*
+	  
 	  for (const auto &start_kmer : start_nodes) {
 	    std::list <kmer_pair> contig;
 	    contig.push_back(start_kmer);
@@ -330,7 +285,7 @@ std::list <std::list <kmer_pair>> contigs;
 	    }
 	    contigs.push_back(contig);
 	  }
-*/
+
   auto end_read = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
   auto end = std::chrono::high_resolution_clock::now();
