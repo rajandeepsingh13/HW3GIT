@@ -132,7 +132,7 @@ bool HashMap::insert(const kmer_pair &kmer, upcxx::atomic_domain<int>& ad_i64) {
   	localSlotID = hash % sizePerProc;
 
   	upcxx::future<int> f = ad_i64.fetch_add(globalUsed[procBasedOnHash] + localSlotID, 1, std::memory_order_relaxed);
-  	upcxx::int64_t res = f.wait();
+  	upcxx::uint64_t res = f.wait();
   	if (res == 0){
   		upcxx::rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();
   		success = true;
@@ -281,9 +281,9 @@ int main(int argc, char **argv) {
 //std::cout<<" "<<start_nodes.size()<<"\n";
 
   auto end_insert = std::chrono::high_resolution_clock::now();
-  //ad.destroy();
+  //ad_i64.destroy();
   upcxx::barrier();
-  ad.destroy();
+  ad_i64.destroy();
 
   double insert_time = std::chrono::duration <double> (end_insert - start).count();
   if (run_type != "test") {
