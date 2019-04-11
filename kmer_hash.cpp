@@ -54,6 +54,7 @@ std::vector<upcxx::global_ptr<int>> globalUsed;
   // Request a slot or check if it's already used.
   bool request_slot(uint64_t slot);
   bool slot_used(uint64_t slot);
+  void printer();
 };
 
 HashMap::HashMap(size_t size, int nprocs) {
@@ -86,6 +87,11 @@ void HashMap::initialize_localData(){
 
 
 }
+
+void HashMap::printer(){
+	std::cout<<"\n this is it:"<<upcxx::rget(globalUsed[0] + 2).wait();
+}
+
 /*
 bool HashMap::insert(const kmer_pair &kmer) {
   uint64_t hash = kmer.hash() % my_size;
@@ -300,7 +306,7 @@ int main(int argc, char **argv) {
   auto start_read = std::chrono::high_resolution_clock::now();
 
 
-  std::cout<<"\n this is it:"<<upcxx::rget(globalUsed[0] + 2).wait();
+  hashmap.printer();
   upcxx::barrier();
 
 
