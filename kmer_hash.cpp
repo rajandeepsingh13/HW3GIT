@@ -300,12 +300,12 @@ int main(int argc, char **argv) {
   auto start_read = std::chrono::high_resolution_clock::now();
 
 
-  //std::cout<<"\n this is it:"<<upcxx::rget(globalUsed[0] + 2).wait();
-  //upcxx::barrier();
+  std::cout<<"\n this is it:"<<upcxx::rget(globalUsed[0] + 2).wait();
+  upcxx::barrier();
 
 
 std::list <std::list <kmer_pair>> contigs;
-	  
+	  /*
 	  for (const auto &start_kmer : start_nodes) {
 	    std::list <kmer_pair> contig;
 	    contig.push_back(start_kmer);
@@ -324,7 +324,7 @@ std::list <std::list <kmer_pair>> contigs;
 	    }
 	    contigs.push_back(contig);
 	  }
-
+*/
   auto end_read = std::chrono::high_resolution_clock::now();
   upcxx::barrier();
   auto end = std::chrono::high_resolution_clock::now();
