@@ -29,7 +29,7 @@ struct HashMap {
 std::vector<upcxx::global_ptr<kmer_pair>> globalData;
 std::vector<upcxx::global_ptr<int>> globalUsed;
   size_t my_size;
-  int rank_n;
+  size_t rank_n;
 
   size_t size() const noexcept;
 
@@ -42,7 +42,7 @@ std::vector<upcxx::global_ptr<int>> globalUsed;
 
   // Most important functions: insert and retrieve
   // k-mers from the hash table.
-  bool insert(const kmer_pair &kmer);
+  bool insert(const kmer_pair &kmer, upcxx::atomic_domain<int>& ad_i64 );
   bool find(const pkmer_t &key_kmer, kmer_pair &val_kmer, int currentRank);
 
   // Helper functions
@@ -113,7 +113,7 @@ bool HashMap::insert(const kmer_pair &kmer) {
 }
 */
 
-bool HashMap::insert(const kmer_pair &kmer) {
+bool HashMap::insert(const kmer_pair &kmer, upcxx::atomic_domain<int>& ad_i64) {
   uint64_t hash = kmer.hash() % my_size;
 
   int sizePerProc = (my_size+rank_n-1)/rank_n;
@@ -126,19 +126,19 @@ bool HashMap::insert(const kmer_pair &kmer) {
 
   bool success = false;
 
-  do {
+  do { //TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
   	hash = (hash + probeRank) % my_size;
   	procBasedOnHash = hash / sizePerProc;
   	localSlotID = hash % sizePerProc;
 
-  	if (upcxx::rget(globalUsed[procBasedOnHash] + localSlotID).wait() == 0){
-  		upcxx::rput(1, globalUsed[procBasedOnHash] + localSlotID).wait();
-	    upcxx::rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();
-	    success = true;
+  	upcxx::future<int> f = ad_i64.fetch_add(globalUsed[procBasedOnHash] + localSlotID, 1, std::memory_order_relaxed);
+  	upcxx::int64_t res = f.wait();
+  	if (res == 0){
+  		upcxx::rput(kmer_pair(kmer), globalData[procBasedOnHash] + localSlotID).wait();
+  		success = true;
 	    break;
-	} else {
+  	} else {
 		probeRank++;
-
 	}	
   } while (!success && probeRank < my_size);
   return success;
@@ -259,6 +259,8 @@ int main(int argc, char **argv) {
     BUtil::print("Finished reading kmers.\n");
   }
 
+//Atomic Domain
+  upcxx::atomic_domain<int> ad_i64({upcxx::atomic_op::fetch_add});
   auto start = std::chrono::high_resolution_clock::now();
 
   std::vector <kmer_pair> start_nodes;
@@ -266,7 +268,7 @@ int main(int argc, char **argv) {
   int startPoint = sizeSplit * upcxx::rank_me();
 	  for (int i = startPoint; i<startPoint+sizeSplit||i<kmers.size(); i++) {
 	  	kmer_pair kmer = kmers[i];
-	    bool success = hashmap.insert(kmer);
+	    bool success = hashmap.insert(kmer, ad_i64);
 	    if (!success) {
 	      throw std::runtime_error("Error: HashMap is full!");
 	    }
@@ -279,7 +281,9 @@ int main(int argc, char **argv) {
 //std::cout<<" "<<start_nodes.size()<<"\n";
 
   auto end_insert = std::chrono::high_resolution_clock::now();
+  //ad.destroy();
   upcxx::barrier();
+  ad.destroy();
 
   double insert_time = std::chrono::duration <double> (end_insert - start).count();
   if (run_type != "test") {
